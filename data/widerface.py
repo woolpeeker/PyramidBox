@@ -6,7 +6,7 @@ https://github.com/fmassa/vision/blob/voc_dataset/torchvision/datasets/voc.py
 Updated by: Ellis Brown, Max deGroot
 """
 
-import os
+import os, re
 import os.path
 import sys
 import torch
@@ -81,19 +81,33 @@ class Detection(data.Dataset):
             (default: 'VOC2007')
     """
 
-    def __init__(self, anno_file, transform=None, target_transform=None,
+    def __init__(self, widerPath, transform=None, target_transform=None,
                  dataset_name='WiderFace'):
-        self.anno_file = anno_file
+        self.widerPath = widerPath
+        self.anno_file = os.path.join(widerPath,'wider_face_split/wider_face_train_bbx_gt.txt')
         self.transform = transform
         self.target_transform = target_transform
         self.name = dataset_name
-        self.ids = list()
-        self.annotation = list()
         self.counter = 0
-        for line in open(self.anno_file,'r'):
-            filename = line.strip().split()[0]
-            self.ids.append(filename)
-            self.annotation.append(line.strip().split()[1:])
+        annoDict = self.read_txt(self.anno_file)
+        self.ids = list(annoDict.keys())
+        self.annotation = list(annoDict.values())
+
+    def read_txt(self, path):
+        annotation = dict()
+        k = ''
+        for line in open(path).readlines():
+            line = line.rstrip()
+            if re.match('.*.jpg', line):
+                k = os.path.join(self.widerPath, 'WIDER_train/images', line)
+            elif len(line.split()) >= 4:
+                bbox = np.array([int(x) for x in line.split()])
+                bbox = bbox[:4]
+                if np.any(bbox>0):
+                    annotation.setdefault(k, []).extend(bbox.tolist())
+        for k in annotation.keys():
+            annotation[k] = [len(annotation[k]) // 4, *(annotation[k])]
+        return annotation
 
     def __getitem__(self, index):
         im, gt, h, w = self.pull_item(index)

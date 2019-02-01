@@ -17,7 +17,7 @@ import time
 from layers import *
 
 
-os.environ["CUDA_VISIBLE_DEVICES"]="2,3"
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3"
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
@@ -25,14 +25,14 @@ def str2bool(v):
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detector Training')
 parser.add_argument('--batch_size', default=32, type=int, help='Batch size for training')
 parser.add_argument('--resume', default=None, type=str, help='Resume from checkpoint')
-parser.add_argument('--num_workers', default=4, type=int, help='Number of workers used in dataloading')
+parser.add_argument('--num_workers', default=16, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--start_iter', default=0, type=int, help='Begin counting iterations starting from this value (should be used with resume)')
 parser.add_argument('--cuda', default=True, type=str2bool, help='Use cuda to train model')
-parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
+parser.add_argument('--lr', '--learning-rate', default=1e-4, type=float, help='initial learning rate')
 parser.add_argument('--visdom', default=False, type=str2bool, help='Use visdom to for loss visualization')
 parser.add_argument('--send_images_to_visdom', type=str2bool, default=False, help='Sample a random image from each 10th batch, send it to visdom after augmentations step')
 parser.add_argument('--save_folder', default='weights/', help='Location to save checkpoint models')
-parser.add_argument('--annoPath', default="/home/guoqiushan/share/face_box/wider.list", help='Location of wider face')
+parser.add_argument('--widerPath', default="/home/luojiapeng/datasets/widerface", help='Location of wider face')
 args = parser.parse_args()
 
 if args.cuda and torch.cuda.is_available():
@@ -120,7 +120,7 @@ def train():
     epoch = 0
     print('Loading Dataset...')
 
-    dataset = Detection(args.annoPath, PyramidAugmentation(ssd_dim, means), AnnotationTransform())
+    dataset = Detection(args.widerPath, PyramidAugmentation(ssd_dim, means), AnnotationTransform())
 
     epoch_size = len(dataset) // args.batch_size
     print('Training SSD on', dataset.name)
